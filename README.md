@@ -86,4 +86,4 @@ There is a password-protected admin mode that adds a Delete button to every sign
 
 ---
 
-*Made with ❤️ and a little bit of playa dust for Critical Northwest 2026 — Vibrant Resonance.*
+*Made with ❤️ and a little bit of forest magic for Critical Northwest 2026 — Vibrant Resonance.*
