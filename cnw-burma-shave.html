@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vibrant Resonance — Burma Shave Signs · CriticalNW 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #263b42; --bg2: #1c2e34; --bg3: #162429;
+    --card: #1e3038; --card-hover: #243840;
+    --border: #2e4a55; --border-bright: #3d6070;
+    --ray: #c8b84a; --text: #eee8d5; --muted: #7aa0ad; --dim: #4a7080;
+    --pink: #e8537a; --orange: #e8923a; --yellow: #e8d03a;
+    --green: #4ecb7a; --teal: #3ecac8; --purple: #a070d8;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg3); color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; min-height: 100vh; }
+  .page { max-width: 680px; margin: 0 auto; padding: 0 16px 60px; }
+
+  .hero { position: relative; background: var(--bg2); border-radius: 0 0 24px 24px; padding: 40px 24px 32px; text-align: center; overflow: hidden; margin-bottom: 28px; }
+  .rays-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .hero-inner { position: relative; z-index: 2; }
+  .swirl { width: 96px; height: 96px; margin: 0 auto 16px; }
+  .swirl svg { width: 100%; height: 100%; }
+  .eyebrow { font-size: 12px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--yellow); margin-bottom: 8px; }
+  .hero-title { font-family: 'Oswald', sans-serif; font-size: clamp(32px, 8vw, 48px); font-weight: 700; letter-spacing: 0.05em; line-height: 1; background: linear-gradient(90deg, var(--pink) 0%, var(--orange) 22%, var(--yellow) 42%, var(--green) 62%, var(--teal) 78%, var(--purple) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 4px; }
+  .hero-title span { display: block; }
+  .hero-sub { font-size: 15px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+  .divider-ray { height: 1px; background: linear-gradient(90deg, transparent 0%, var(--ray) 30%, var(--teal) 60%, transparent 100%); opacity: 0.35; margin: 24px 0 0; }
+
+  .add-section { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+  .add-label { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+  .add-row { display: flex; gap: 10px; }
+  .add-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 999px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; padding: 12px 20px; outline: none; transition: border-color 0.2s; }
+  .add-input::placeholder { color: var(--dim); }
+  .add-input:focus { border-color: var(--teal); }
+  .add-btn { background: none; border: 1.5px solid var(--teal); color: var(--teal); border-radius: 999px; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500; padding: 12px 24px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+  .add-btn:hover { background: rgba(62,202,200,0.15); }
+  .add-btn:active { transform: scale(0.97); }
+  .rejected-msg { font-size: 13px; color: var(--pink); margin-top: 8px; min-height: 18px; }
+
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .sort-group { display: flex; align-items: center; gap: 8px; }
+  .sort-lbl { font-size: 13px; color: var(--muted); }
+  .sort-pill { font-size: 13px; font-family: 'Inter', sans-serif; padding: 5px 16px; border-radius: 999px; border: 1px solid var(--border); background: none; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .sort-pill.on { border-color: var(--yellow); color: var(--yellow); background: rgba(232,208,58,0.1); }
+  .status-msg { font-size: 13px; color: var(--teal); min-height: 20px; text-align: right; }
+  .count-lbl { font-size: 13px; color: var(--dim); }
+
+  .admin-bar { background: rgba(232,208,58,0.08); border: 1px solid rgba(232,208,58,0.3); border-radius: 10px; padding: 8px 14px; margin-bottom: 14px; font-size: 13px; color: var(--yellow); display: none; align-items: center; gap: 8px; }
+  .admin-bar.visible { display: flex; }
+  .admin-bar span { flex: 1; }
+  .admin-exit { background: none; border: 1px solid rgba(232,208,58,0.4); color: var(--yellow); border-radius: 6px; padding: 3px 10px; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; }
+  .admin-exit:hover { background: rgba(232,208,58,0.1); }
+
+  .signs-list { display: flex; flex-direction: column; gap: 8px; }
+  .sign-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; transition: border-color 0.15s, background 0.15s; }
+  .sign-card:hover { background: var(--card-hover); border-color: var(--border-bright); }
+  .sign-card.rank-1 { border-color: var(--yellow); border-width: 1.5px; }
+  .sign-card.rank-2 { border-color: var(--orange); }
+  .sign-card.rank-3 { border-color: var(--green); }
+  .rank-mark { font-size: 18px; flex-shrink: 0; width: 20px; text-align: center; line-height: 1; }
+  .vote-col { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; min-width: 44px; }
+  .vbtn { background: none; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 14px; color: var(--dim); line-height: 1; transition: color 0.1s, background 0.1s; }
+  .vbtn:hover { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .vbtn.up-on { color: var(--teal) !important; }
+  .vbtn.dn-on { color: var(--pink) !important; }
+  .vcount { font-size: 17px; font-weight: 500; color: var(--text); min-width: 28px; text-align: center; line-height: 1.3; }
+  .vcount.pos { color: var(--teal); }
+  .vcount.neg { color: var(--pink); }
+  .sign-body { flex: 1; min-width: 0; }
+  .sign-text { font-size: 17px; color: var(--text); line-height: 1.5; font-style: italic; opacity: 0.92; }
+  .sign-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 999px; white-space: nowrap; letter-spacing: 0.04em; }
+  .badge-new { border: 1px solid var(--green); color: var(--green); }
+  .badge-top { border: 1px solid var(--yellow); color: var(--yellow); }
+  .del-btn { background: none; border: 1px solid rgba(232,83,122,0.35); color: var(--pink); border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; flex-shrink: 0; display: none; font-family: 'Inter', sans-serif; transition: background 0.15s; }
+  .del-btn:hover { background: rgba(232,83,122,0.15); }
+  .admin-mode .del-btn { display: block; }
+
+  .loading-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 16px; }
+  .loading-state .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; margin: 0 auto 12px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Admin login modal */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border-bright); border-radius: 16px; padding: 28px 24px; width: min(360px, 90vw); }
+  .modal h3 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .modal input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 16px; padding: 11px 16px; outline: none; margin-bottom: 10px; transition: border-color 0.2s; }
+  .modal input:focus { border-color: var(--teal); }
+  .modal-err { font-size: 13px; color: var(--pink); min-height: 18px; margin-bottom: 10px; }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-cancel { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 8px 16px; font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; }
+  .modal-cancel:hover { border-color: var(--border-bright); color: var(--text); }
+  .modal-confirm { background: none; border: 1px solid var(--teal); color: var(--teal); border-radius: 8px; padding: 8px 20px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .modal-confirm:hover { background: rgba(62,202,200,0.12); }
+
+  .footer { text-align: center; margin-top: 40px; font-size: 13px; color: var(--dim); display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .admin-trigger { background: none; border: none; color: var(--dim); font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; opacity: 0.5; padding: 4px 8px; border-radius: 6px; transition: opacity 0.2s; }
+  .admin-trigger:hover { opacity: 1; color: var(--yellow); }
+
+  @media (max-width: 480px) {
+    .add-row { flex-direction: column; }
+    .add-btn { border-radius: 12px; }
+    .sign-text { font-size: 16px; }
+    .hero { border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page" id="page">
+
+  <div class="hero">
+    <svg class="rays-canvas" viewBox="0 0 680 280" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <g stroke="#c8b84a" stroke-width="0.6" opacity="0.15">
+        <line x1="340" y1="140" x2="0" y2="0"/><line x1="340" y1="140" x2="60" y2="0"/>
+        <line x1="340" y1="140" x2="120" y2="0"/><line x1="340" y1="140" x2="180" y2="0"/>
+        <line x1="340" y1="140" x2="240" y2="0"/><line x1="340" y1="140" x2="300" y2="0"/>
+        <line x1="340" y1="140" x2="340" y2="0"/><line x1="340" y1="140" x2="400" y2="0"/>
+        <line x1="340" y1="140" x2="460" y2="0"/><line x1="340" y1="140" x2="520" y2="0"/>
+        <line x1="340" y1="140" x2="580" y2="0"/><line x1="340" y1="140" x2="680" y2="0"/>
+        <line x1="340" y1="140" x2="680" y2="50"/><line x1="340" y1="140" x2="680" y2="110"/>
+        <line x1="340" y1="140" x2="680" y2="170"/><line x1="340" y1="140" x2="680" y2="230"/>
+        <line x1="340" y1="140" x2="680" y2="280"/><line x1="340" y1="140" x2="0" y2="60"/>
+        <line x1="340" y1="140" x2="0" y2="120"/><line x1="340" y1="140" x2="0" y2="180"/>
+        <line x1="340" y1="140" x2="0" y2="240"/><line x1="340" y1="140" x2="0" y2="280"/>
+        <line x1="340" y1="140" x2="140" y2="280"/><line x1="340" y1="140" x2="280" y2="280"/>
+        <line x1="340" y1="140" x2="400" y2="280"/><line x1="340" y1="140" x2="540" y2="280"/>
+      </g>
+      <g fill="#c8b84a" opacity="0.55">
+        <path d="M30,22 L32,28 L38,28 L33,32 L35,38 L30,34 L25,38 L27,32 L22,28 L28,28 Z" transform="scale(0.7)"/>
+        <path d="M30,22 L32,28 L38,28 L33,32 L35,38 L30,34 L25,38 L27,32 L22,28 L28,28 Z" transform="translate(618,10) scale(0.6)"/>
+        <path d="M30,22 L32,28 L38,28 L33,32 L35,38 L30,34 L25,38 L27,32 L22,28 L28,28 Z" transform="translate(8,160) scale(0.5)"/>
+        <path d="M30,22 L32,28 L38,28 L33,32 L35,38 L30,34 L25,38 L27,32 L22,28 L28,28 Z" transform="translate(635,130) scale(0.5)"/>
+        <path d="M30,22 L32,28 L38,28 L33,32 L35,38 L30,34 L25,38 L27,32 L22,28 L28,28 Z" transform="translate(290,260) scale(0.45)"/>
+      </g>
+    </svg>
+    <div class="hero-inner">
+      <div class="swirl">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="50" cy="50" r="47" fill="#162429" stroke="#2e4a55" stroke-width="1.5"/>
+          <path d="M50,10 C72,10 90,28 90,50 C90,65 82,78 70,85" fill="none" stroke="#e8537a" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M50,15 C70,15 85,31 85,50 C85,63 78,74 67,81" fill="none" stroke="#e8923a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M50,20 C68,20 80,34 80,50 C80,61 74,71 64,77" fill="none" stroke="#e8d03a" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M50,25 C46,25 42,26 38,28 C30,33 26,41 26,50 C26,64 36,76 50,80" fill="none" stroke="#4ecb7a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M50,18 C46,18 41,19 36,22 C25,28 18,38 18,50 C18,67 32,82 50,86" fill="none" stroke="#3ecac8" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M50,12 C45,12 39,14 34,17 C20,24 12,36 12,50 C12,70 28,88 50,92" fill="none" stroke="#a070d8" stroke-width="2" stroke-linecap="round"/>
+          <line x1="50" y1="6" x2="50" y2="94" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.85"/>
+          <circle cx="50" cy="50" r="5" fill="white" opacity="0.95"/>
+          <circle cx="50" cy="50" r="2.5" fill="white"/>
+          <circle cx="50" cy="20" r="2.5" fill="white" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="eyebrow">Critical Northwest 2026</div>
+      <div class="hero-title"><span>Vibrant</span><span>Resonance</span></div>
+      <div class="hero-sub">Vote for your Burma Shave signs — or tune in a new frequency</div>
+      <div class="divider-ray"></div>
+    </div>
+  </div>
+
+  <div class="add-section">
+    <div class="add-label">Drop a new sign</div>
+    <div class="add-row">
+      <input type="text" class="add-input" id="newSign" placeholder="What should the playa say?" maxlength="200"/>
+      <button class="add-btn" onclick="submitSign()">+ Add</button>
+    </div>
+    <div class="rejected-msg" id="rejected"></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="sort-group">
+      <span class="sort-lbl">Sort by</span>
+      <button class="sort-pill on" id="s-top" onclick="setSort('top')">Top</button>
+      <button class="sort-pill" id="s-new" onclick="setSort('new')">Newest</button>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span class="count-lbl" id="count-lbl"></span>
+      <span class="status-msg" id="status"></span>
+    </div>
+  </div>
+
+  <div class="admin-bar" id="admin-bar">
+    <span>&#9670; Admin mode — delete buttons are live</span>
+    <button class="admin-exit" onclick="exitAdmin()">Exit admin</button>
+  </div>
+
+  <div class="signs-list" id="signs-list">
+    <div class="loading-state"><div class="spinner"></div>Tuning in...</div>
+  </div>
+
+  <div class="footer">
+    <span>CriticalNW 2026 · Vibrant Resonance · Burma Shave community vote</span>
+    <button class="admin-trigger" onclick="openModal()" title="Admin">&#9679;&#9679;&#9679;</button>
+  </div>
+</div>
+
+<!-- Admin login modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h3>Admin access</h3>
+    <p>Enter the admin password to manage signs.</p>
+    <input type="password" id="pw-input" placeholder="Password" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <div class="modal-err" id="pw-err"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" onclick="checkPw()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BIN_ID  = '6a1921d621f9ee59d2984163';
+const API_KEY = '$2a$10$oS5hvmVg.WsKR0yMU/Y0u.ZoxPByuCIzP4MldA710gvpFir4jXXxW';
+const BASE    = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY, 'X-Bin-Versioning': 'false' };
+const ADMIN_PW = '1379ToDust';
+
+const SEED = [
+  "What is the sound of one buttcheek clapping?",
+  "Large playground ahead! Slow down!",
+  "We're not a cult anymore, we're a religion!",
+  "All Glory To The Hypnodrome!",
+  "Disconnect with the Default and connect with what matters",
+  "Volunteers do it in the woods",
+  "WOAHHHH Sparkle Pony!",
+  "Take the Census, it's Critical!",
+  "All the best news comes from a drunk shark on Esplanade",
+  "#HotDogWaterForLife",
+  "For being Undisclosed, this Location is fairly prominent",
+  "Burn the lump!",
+  "You're not done pooing 'til you pee a second time.",
+  "Welcome Newbies! Spankings Everyday at Noon",
+  "Thank you Mark2!",
+  "1. Everyone at this event loves to flirt, 2. Some flirt romantically, Some flirt with disaster 3. And some flirt with both.",
+  "Stop by Hellmouth Bakery for all your '90s Hot Topic needs",
+  "There's probably an Emergency Porn about that!",
+  "There is no them, only all of US",
+  "Thanks for being top notch weirdos!",
+  "Save your bad decisions for bootcamp",
+  "Redbeard's chest hair smells like bacon"
+];
+
+// Fast regex pre-check — catches obvious cases instantly before hitting the API
+const BLOCKED = [
+  /\bn[i1!|]+g+[e3]+r/i, /\bn[i1!|]+gg+[ae3]+/i, /\bk[i1]+k[e3]+/i,
+  /\bch[i1]+nk/i, /\bsp[i1]+c/i, /\bw[e3]+tb[ae3]+ck/i,
+  /\bf[ae3]+gg?[o0]+t/i, /\bd[yi]+k[e3]+/i,
+  /\b(kill|murder|lynch|hang)\s+(all\s+)?(blacks?|whites?|jews?|muslims?|gays?|trans)/i,
+  /\bwhite\s+(power|pride|suprem)/i,
+  /\bheil\s+hitler/i, /\bgas\s+the/i
+];
+
+function quickBlock(text) { return BLOCKED.some(re => re.test(text)); }
+
+// AI moderation — calls Claude to catch anything the regex misses
+async function isModerationBlocked(text) {
+  if (quickBlock(text)) return true;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 50,
+        system: 'You are a content moderator for a fun, inclusive community event called Critical Northwest, a regional Burning Man event. Your only job is to decide if a submitted sign contains hate speech, racial slurs, targeted harassment, content that attacks people based on race, ethnicity, gender, sexuality, religion, or disability, or graphic calls to violence. Playful, crude, weird, or edgy humor is totally fine — this is a burn event. Respond with only the single word YES if the content should be blocked, or NO if it is acceptable. No explanation.',
+        messages: [{ role: 'user', content: `Sign submission: "${text}"` }]
+      })
+    });
+    const data = await res.json();
+    const answer = data?.content?.[0]?.text?.trim().toUpperCase();
+    return answer === 'YES';
+  } catch(e) {
+    // If the API call fails, fall back to regex only — don't block on network errors
+    return false;
+  }
+}
+
+let signs = [], userVotes = JSON.parse(localStorage.getItem('cnw_uv_v3') || '{}');
+let sortMode = 'top', saving = false, adminMode = false;
+
+function saveLocal() { localStorage.setItem('cnw_uv_v3', JSON.stringify(userVotes)); }
+
+function flash(msg, color) {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.style.color = color || 'var(--teal)';
+  clearTimeout(el._t); el._t = setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+function showRejected(msg) {
+  const el = document.getElementById('rejected');
+  el.textContent = msg; clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+function openModal() {
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').textContent = '';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('pw-input').focus(), 50);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === ADMIN_PW) { closeModal(); enterAdmin(); }
+  else { document.getElementById('pw-err').textContent = 'Incorrect password.'; }
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function enterAdmin() {
+  adminMode = true;
+  document.getElementById('page').classList.add('admin-mode');
+  document.getElementById('admin-bar').classList.add('visible');
+  flash('Admin mode on', 'var(--yellow)');
+}
+
+function exitAdmin() {
+  adminMode = false;
+  document.getElementById('page').classList.remove('admin-mode');
+  document.getElementById('admin-bar').classList.remove('visible');
+  flash('Admin mode off', 'var(--muted)');
+}
+
+async function fetchSigns() {
+  try {
+    const r = await fetch(BASE + '/latest', { headers: { 'X-Master-Key': API_KEY } });
+    const data = await r.json();
+    if (data.record && Array.isArray(data.record.signs)) return data.record.signs;
+  } catch(e) {}
+  return null;
+}
+
+async function putSigns(s) {
+  try {
+    await fetch(BASE, { method: 'PUT', headers: HEADERS, body: JSON.stringify({ signs: s }) });
+    return true;
+  } catch(e) { return false; }
+}
+
+async function load() {
+  document.getElementById('signs-list').innerHTML = '<div class="loading-state"><div class="spinner"></div>Tuning in...</div>';
+  let remote = await fetchSigns();
+  if (!remote || remote.length === 0) {
+    remote = SEED.map((t, i) => ({ id: 's' + i, text: t, votes: 0, ts: i, seed: true }));
+    await putSigns(remote);
+  }
+  signs = remote; render();
+}
+
+async function vote(id, dir) {
+  if (saving) return;
+  const s = signs.find(x => x.id === id); if (!s) return;
+  const prev = userVotes[id];
+  if (prev === dir) { s.votes += dir === 'up' ? -1 : 1; delete userVotes[id]; }
+  else { if (prev) s.votes += prev === 'up' ? -1 : 1; s.votes += dir === 'up' ? 1 : -1; userVotes[id] = dir; }
+  saveLocal(); render();
+  saving = true; const ok = await putSigns(signs); saving = false;
+  if (!ok) flash('Could not save vote — try again', 'var(--pink)');
+}
+
+async function deleteSign(id) {
+  if (!adminMode) return;
+  if (!confirm('Delete this sign?')) return;
+  signs = signs.filter(s => s.id !== id); render();
+  saving = true; const ok = await putSigns(signs); saving = false;
+  if (ok) flash('Sign deleted');
+  else { flash('Delete failed', 'var(--pink)'); load(); }
+}
+
+async function submitSign() {
+  const inp = document.getElementById('newSign');
+  const text = inp.value.trim(); if (!text) return;
+  if (saving) { flash('Still saving — try in a moment', 'var(--yellow)'); return; }
+
+  // Show checking state
+  const addBtn = document.querySelector('.add-btn');
+  addBtn.textContent = 'Checking...';
+  addBtn.disabled = true;
+  showRejected('');
+
+  const blocked = await isModerationBlocked(text);
+
+  addBtn.textContent = '+ Add';
+  addBtn.disabled = false;
+
+  if (blocked) {
+    showRejected('That sign was blocked — keep it weird, not hateful.');
+    inp.value = '';
+    return;
+  }
+
+  const newSign = { id: 'u' + Date.now(), text, votes: 0, ts: Date.now(), seed: false };
+  signs.push(newSign); inp.value = ''; render();
+  saving = true; const ok = await putSigns(signs); saving = false;
+  if (ok) flash('Sign added — the playa resonates!');
+  else { signs.pop(); render(); flash('Could not save — try again', 'var(--pink)'); }
+}
+
+document.getElementById('newSign').addEventListener('keydown', e => { if (e.key === 'Enter') submitSign(); });
+
+function setSort(m) {
+  sortMode = m;
+  document.getElementById('s-top').classList.toggle('on', m === 'top');
+  document.getElementById('s-new').classList.toggle('on', m === 'new');
+  render();
+}
+
+function render() {
+  const sorted = [...signs].sort((a, b) => sortMode === 'top' ? b.votes - a.votes : b.ts - a.ts);
+  document.getElementById('count-lbl').textContent = sorted.length + ' signs';
+  const rankColors  = ['', 'var(--yellow)', 'var(--orange)', 'var(--green)'];
+  const rankMarks   = ['', '★', '✦', '✧'];
+  const rankClasses = ['', 'rank-1', 'rank-2', 'rank-3'];
+  document.getElementById('signs-list').innerHTML = sorted.map((s, i) => {
+    const uv = userVotes[s.id];
+    const ri = i < 3 ? i + 1 : 0;
+    const showTop = i === 0 && s.votes > 0;
+    const vc = s.votes > 0 ? 'pos' : s.votes < 0 ? 'neg' : '';
+    const markColor = rankColors[ri] || 'transparent';
+    const safeTxt = s.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return `<div class="sign-card ${rankClasses[ri]}">
+      <span class="rank-mark" style="color:${markColor}" aria-hidden="true">${rankMarks[ri] || ''}</span>
+      <div class="vote-col">
+        <button class="vbtn ${uv === 'up' ? 'up-on' : ''}" onclick="vote('${s.id}','up')" aria-label="Upvote">▲</button>
+        <span class="vcount ${vc}">${s.votes}</span>
+        <button class="vbtn ${uv === 'dn' ? 'dn-on' : ''}" onclick="vote('${s.id}','dn')" aria-label="Downvote">▼</button>
+      </div>
+      <div class="sign-body">
+        <div class="sign-text">"${safeTxt}"</div>
+        ${(!s.seed || showTop) ? `<div class="sign-meta">
+          ${!s.seed ? '<span class="badge badge-new">community</span>' : ''}
+          ${showTop ? '<span class="badge badge-top">top sign</span>' : ''}
+        </div>` : ''}
+      </div>
+      <button class="del-btn" onclick="deleteSign('${s.id}')" aria-label="Delete sign">&#128465; Delete</button>
+    </div>`;
+  }).join('');
+}
+
+load();
+setInterval(async () => { if (!saving) { const f = await fetchSigns(); if (f) { signs = f; render(); } } }, 30000);
+</script>
+</body>
+</html>
