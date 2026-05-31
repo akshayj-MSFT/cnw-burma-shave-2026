@@ -104,6 +104,15 @@
   .admin-trigger { background: none; border: none; color: var(--dim); font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; opacity: 0.5; padding: 4px 8px; border-radius: 6px; transition: opacity 0.2s; }
   .admin-trigger:hover { opacity: 1; color: var(--yellow); }
 
+  .deadline-banner { background: rgba(232,208,58,0.08); border: 1px solid rgba(232,208,58,0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; color: var(--yellow); display: flex; align-items: center; gap: 10px; line-height: 1.4; }
+  .deadline-icon { font-size: 18px; flex-shrink: 0; }
+  .deadline-banner strong { font-weight: 600; }
+
+  .closed-banner { background: rgba(62,202,200,0.06); border: 1px solid rgba(62,202,200,0.2); border-radius: 16px; padding: 24px 20px; margin-bottom: 20px; text-align: center; }
+  .closed-icon { font-size: 32px; margin-bottom: 8px; }
+  .closed-title { font-size: 17px; font-weight: 500; color: var(--teal); margin-bottom: 6px; }
+  .closed-sub { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
   @media (max-width: 480px) {
     .add-row { flex-direction: column; }
     .add-btn { border-radius: 12px; }
@@ -163,13 +172,24 @@
     </div>
   </div>
 
-  <div class="add-section">
+  <div class="deadline-banner" id="deadline-banner">
+    <span class="deadline-icon">⏳</span>
+    <span>Sign submissions close <strong>June 21 at 6:00 PM PDT</strong> — after that we head to the printer!</span>
+  </div>
+
+  <div class="add-section" id="add-section">
     <div class="add-label">Drop a new sign</div>
     <div class="add-row">
       <input type="text" class="add-input" id="newSign" placeholder="What should the playa say?" maxlength="200"/>
       <button class="add-btn" onclick="submitSign()">+ Add</button>
     </div>
     <div class="rejected-msg" id="rejected"></div>
+  </div>
+
+  <div class="closed-banner" id="closed-banner" style="display:none">
+    <div class="closed-icon">🖨️</div>
+    <div class="closed-title">Submissions are closed</div>
+    <div class="closed-sub">The deadline was June 21 at 6:00 PM PDT — these signs are headed to the printer.<br>Voting is still open!</div>
   </div>
 
   <div class="toolbar">
@@ -376,7 +396,21 @@ async function deleteSign(id) {
   else { flash('Delete failed', 'var(--pink)'); load(); }
 }
 
+// June 21 2026 6:00 PM PDT = UTC-7 = June 22 01:00 UTC
+const DEADLINE = new Date('2026-06-22T01:00:00Z');
+
+function isPastDeadline() { return new Date() > DEADLINE; }
+
+function applyDeadlineUI() {
+  if (isPastDeadline()) {
+    document.getElementById('deadline-banner').style.display = 'none';
+    document.getElementById('add-section').style.display = 'none';
+    document.getElementById('closed-banner').style.display = 'block';
+  }
+}
+
 async function submitSign() {
+  if (isPastDeadline()) { flash('Submissions are closed — voting is still open!', 'var(--muted)'); return; }
   const inp = document.getElementById('newSign');
   const text = inp.value.trim(); if (!text) return;
   if (saving) { flash('Still saving — try in a moment', 'var(--yellow)'); return; }
@@ -447,6 +481,7 @@ function render() {
 }
 
 load();
+applyDeadlineUI();
 setInterval(async () => { if (!saving) { const f = await fetchSigns(); if (f) { signs = f; render(); } } }, 30000);
 </script>
 </body>
