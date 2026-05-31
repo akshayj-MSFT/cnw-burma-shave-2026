@@ -1,7 +1,7 @@
 # 🔥 Vibrant Resonance — Burma Shave Sign Voting
 ### Critical Northwest 2026
 
-A community voting tool for Burma Shave signs at [Critical Northwest](https://criticalnw.org), a regional Burning Man event in the Pacific Northwest. The playa community votes on which one-liner signs to display as participants enter the event — and can submit their own.
+A community voting tool for Burma Shave signs at [Critical Northwest](https://criticalnw.org), a regional Burning Man event in the Pacific Northwest. The burn community votes on which one-liner signs to display as participants enter the event — and can submit their own.
 
 ---
 
