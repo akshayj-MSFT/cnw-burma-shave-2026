@@ -234,7 +234,7 @@
 </div>
 
 <script>
-const BIN_ID  = '6a1921d621f9ee59d2984163';
+const BIN_ID  = '6a29a36ada38895dfea831ed';
 const API_KEY = '$2a$10$oS5hvmVg.WsKR0yMU/Y0u.ZoxPByuCIzP4MldA710gvpFir4jXXxW';
 const BASE    = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
 const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY, 'X-Bin-Versioning': 'false' };
@@ -368,12 +368,23 @@ async function putSigns(s) {
 
 async function load() {
   document.getElementById('signs-list').innerHTML = '<div class="loading-state"><div class="spinner"></div>Tuning in...</div>';
-  let remote = await fetchSigns();
-  if (!remote || remote.length === 0) {
-    remote = SEED.map((t, i) => ({ id: 's' + i, text: t, votes: 0, ts: i, seed: true }));
-    await putSigns(remote);
+  const remote = await fetchSigns();
+
+  if (remote === null) {
+    // Network or API error — don't reseed, just show whatever we had or retry
+    document.getElementById('signs-list').innerHTML = '<div class="loading-state">Couldn\'t reach the server — please refresh to try again.</div>';
+    return;
   }
-  signs = remote; render();
+
+  if (remote.length === 0) {
+    // Bin exists but is genuinely empty — safe to seed
+    signs = SEED.map((t, i) => ({ id: 's' + i, text: t, votes: 0, ts: i, seed: true }));
+    await putSigns(signs);
+  } else {
+    signs = remote;
+  }
+
+  render();
 }
 
 async function vote(id, dir) {
