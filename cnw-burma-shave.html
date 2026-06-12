@@ -204,6 +204,7 @@
 
   <div class="admin-bar" id="admin-bar">
     <span>&#9670; Admin mode — delete buttons are live</span>
+    <button class="admin-exit" onclick="exportCSV()">&#11015; Export CSV</button>
     <button class="admin-exit" onclick="exitAdmin()">Exit admin</button>
   </div>
 
@@ -339,6 +340,25 @@ function enterAdmin() {
   document.getElementById('page').classList.add('admin-mode');
   document.getElementById('admin-bar').classList.add('visible');
   flash('Admin mode on', 'var(--yellow)');
+}
+
+function exportCSV() {
+  const sorted = [...signs].sort((a, b) => b.votes - a.votes);
+  const rows = [['Sign', 'Type', 'Votes']];
+  sorted.forEach(s => {
+    const text = s.text.replace(/"/g, '""');
+    const type = s.seed ? 'original' : 'community';
+    rows.push([`"${text}"`, type, s.votes]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cnw-burma-shave-votes.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  flash('CSV downloaded!', 'var(--yellow)');
 }
 
 function exitAdmin() {
