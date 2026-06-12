@@ -204,7 +204,9 @@
 
   <div class="admin-bar" id="admin-bar">
     <span>&#9670; Admin mode — delete buttons are live</span>
-    <button class="admin-exit" onclick="exportCSV()">&#11015; Export CSV</button>
+    <button class="admin-exit" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="admin-exit" onclick="document.getElementById('csv-import').click()">⬆ Import CSV</button>
+    <input type="file" id="csv-import" accept=".csv" style="display:none" onchange="importCSV(event)"/>
     <button class="admin-exit" onclick="exitAdmin()">Exit admin</button>
   </div>
 
@@ -359,6 +361,49 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
   flash('CSV downloaded!', 'var(--yellow)');
+}
+
+async function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  // Reset file input so same file can be re-imported if needed
+  event.target.value = '';
+
+  const text = await file.text();
+  const lines = text.trim().split('\n');
+
+  // Skip header row
+  const dataLines = lines.slice(1);
+  if (dataLines.length === 0) { flash('CSV appears empty', 'var(--pink)'); return; }
+
+  const parsed = [];
+  for (const line of dataLines) {
+    // Handle quoted fields (sign text may contain commas)
+    const match = line.match(/^"((?:[^"]|"")*)"\s*,\s*(\w+)\s*,\s*(-?\d+)/);
+    if (!match) continue;
+    const signText = match[1].replace(/""/g, '"');
+    const type = match[2].trim();
+    const votes = parseInt(match[3], 10);
+    parsed.push({
+      id: 'r' + Date.now() + Math.random().toString(36).slice(2, 6),
+      text: signText,
+      votes: isNaN(votes) ? 0 : votes,
+      ts: Date.now(),
+      seed: type === 'original'
+    });
+  }
+
+  if (parsed.length === 0) { flash('No valid rows found in CSV', 'var(--pink)'); return; }
+
+  if (!confirm(`This will replace all ${signs.length} current signs with ${parsed.length} signs from the CSV. Are you sure?`)) return;
+
+  signs = parsed;
+  render();
+  saving = true;
+  const ok = await putSigns(signs);
+  saving = false;
+  if (ok) flash(`Restored ${parsed.length} signs from CSV!`, 'var(--yellow)');
+  else { flash('Import failed — could not save to server', 'var(--pink)'); load(); }
 }
 
 function exitAdmin() {
