@@ -1,0 +1,78 @@
+name: Nightly Burma Shave Snapshot
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 2am PDT (UTC-7) = 9am UTC
+  workflow_dispatch:       # also allows manual trigger from GitHub UI
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch data from JSONBin
+        id: fetch
+        run: |
+          RESPONSE=$(curl -s \
+            -H "X-Master-Key: ${{ secrets.JSONBIN_API_KEY }}" \
+            "https://api.jsonbin.io/v3/b/6a29a36ada38895dfea831ed/latest")
+          echo "$RESPONSE" > /tmp/raw.json
+          # Check we got valid data
+          COUNT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['record']['signs']))" 2>/dev/null || echo "0")
+          echo "Sign count: $COUNT"
+          if [ "$COUNT" -eq "0" ]; then
+            echo "No signs found or fetch failed — skipping snapshot"
+            exit 1
+          fi
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Save snapshot
+        run: |
+          mkdir -p snapshots
+          DATE=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
+          # Save pretty-printed JSON
+          python3 -c "
+          import json, sys
+          with open('/tmp/raw.json') as f:
+              data = json.load(f)
+          signs = data['record']['signs']
+          # Sort by votes descending
+          signs.sort(key=lambda x: x.get('votes', 0), reverse=True)
+          snapshot = {
+              'date': '$DATE',
+              'count': len(signs),
+              'signs': signs
+          }
+          with open('snapshots/$DATE.json', 'w') as out:
+              json.dump(snapshot, out, indent=2, ensure_ascii=False)
+          print(f'Saved {len(signs)} signs to snapshots/$DATE.json')
+          "
+
+      - name: Also save as CSV
+        run: |
+          DATE=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
+          python3 -c "
+          import json, csv, sys
+          with open('snapshots/$DATE.json') as f:
+              data = json.load(f)
+          signs = data['signs']
+          with open('snapshots/$DATE.csv', 'w', newline='', encoding='utf-8') as out:
+              writer = csv.writer(out)
+              writer.writerow(['Sign', 'Type', 'Votes'])
+              for s in signs:
+                  stype = 'original' if s.get('seed') else 'community'
+                  writer.writerow([s['text'], stype, s.get('votes', 0)])
+          print(f'Saved CSV with {len(signs)} signs')
+          "
+
+      - name: Commit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add snapshots/
+          DATE=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
+          COUNT=${{ steps.fetch.outputs.count }}
+          git commit -m "📸 Nightly snapshot $DATE — $COUNT signs" || echo "Nothing to commit"
+          git push
