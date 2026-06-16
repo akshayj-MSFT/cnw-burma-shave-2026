@@ -8,6 +8,8 @@ on:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    env:
+      JSONBIN_API_KEY: ${{ secrets.JSONBIN_API_KEY }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -16,14 +18,21 @@ jobs:
         id: fetch
         run: |
           RESPONSE=$(curl -s \
-            -H "X-Master-Key: ${{ secrets.JSONBIN_API_KEY }}" \
+            -H "X-Master-Key: ${JSONBIN_API_KEY}" \
             "https://api.jsonbin.io/v3/b/6a29a36ada38895dfea831ed/latest")
           echo "$RESPONSE" > /tmp/raw.json
-          # Check we got valid data
-          COUNT=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d['record']['signs']))" 2>/dev/null || echo "0")
+          COUNT=$(python3 -c "
+          import sys, json
+          try:
+              d = json.load(open('/tmp/raw.json'))
+              print(len(d['record']['signs']))
+          except Exception as e:
+              print(0)
+          ")
           echo "Sign count: $COUNT"
           if [ "$COUNT" -eq "0" ]; then
             echo "No signs found or fetch failed — skipping snapshot"
+            cat /tmp/raw.json
             exit 1
           fi
           echo "count=$COUNT" >> $GITHUB_OUTPUT
@@ -32,13 +41,11 @@ jobs:
         run: |
           mkdir -p snapshots
           DATE=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
-          # Save pretty-printed JSON
           python3 -c "
-          import json, sys
+          import json
           with open('/tmp/raw.json') as f:
               data = json.load(f)
           signs = data['record']['signs']
-          # Sort by votes descending
           signs.sort(key=lambda x: x.get('votes', 0), reverse=True)
           snapshot = {
               'date': '$DATE',
@@ -54,7 +61,7 @@ jobs:
         run: |
           DATE=$(TZ="America/Los_Angeles" date +%Y-%m-%d)
           python3 -c "
-          import json, csv, sys
+          import json, csv
           with open('snapshots/$DATE.json') as f:
               data = json.load(f)
           signs = data['signs']
