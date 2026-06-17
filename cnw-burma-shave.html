@@ -79,7 +79,11 @@
   .del-btn:hover { background: rgba(232,83,122,0.15); }
   .admin-mode .del-btn { display: block; }
 
-  .loading-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 16px; }
+  .sign-fp { font-size: 11px; color: var(--dim); margin-top: 4px; font-family: monospace; display: none; }
+  .admin-mode .sign-fp { display: block; }
+  .del-fp-btn { background: none; border: 1px solid rgba(232,208,58,0.35); color: var(--yellow); border-radius: 8px; padding: 5px 10px; font-size: 12px; cursor: pointer; flex-shrink: 0; display: none; font-family: 'Inter', sans-serif; transition: background 0.15s; white-space: nowrap; }
+  .del-fp-btn:hover { background: rgba(232,208,58,0.12); }
+  .admin-mode .del-fp-btn { display: block; }
   .loading-state .spinner { width: 28px; height: 28px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; margin: 0 auto 12px; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -511,7 +515,30 @@ function applyDeadlineUI() {
   }
 }
 
-async function submitSign() {
+// Browser fingerprint — combines stable signals into a short hash
+async function getFingerprint() {
+  const raw = [
+    navigator.language,
+    navigator.platform,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    navigator.hardwareConcurrency,
+    navigator.userAgent
+  ].join('|');
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  return Array.from(new Uint8Array(buf)).slice(0, 6).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function deleteByFingerprint(fp) {
+  if (!adminMode) return;
+  const count = signs.filter(s => s.fp === fp).length;
+  if (!confirm(`Delete all ${count} signs from fingerprint ${fp}?`)) return;
+  signs = signs.filter(s => s.fp !== fp); render();
+  saving = true; const ok = await putSigns(signs); saving = false;
+  if (ok) flash(`Deleted ${count} signs from ${fp}`, 'var(--yellow)');
+  else { flash('Delete failed', 'var(--pink)'); load(); }
+}
   if (isPastDeadline()) { flash('Submissions are closed — voting is still open!', 'var(--muted)'); return; }
   const inp = document.getElementById('newSign');
   const text = inp.value.trim(); if (!text) return;
@@ -534,7 +561,8 @@ async function submitSign() {
     return;
   }
 
-  const newSign = { id: 'u' + Date.now(), text, votes: 0, ts: Date.now(), seed: false };
+  const fp = await getFingerprint();
+  const newSign = { id: 'u' + Date.now(), text, votes: 0, ts: Date.now(), seed: false, fp, submitted_at: new Date().toISOString() };
   signs.push(newSign); inp.value = ''; render();
   saving = true; const ok = await putSigns(signs); saving = false;
   if (ok) flash('Sign added — the playa resonates!');
@@ -574,8 +602,12 @@ function render() {
           ${!s.seed ? '<span class="badge badge-new">community</span>' : ''}
           ${showTop ? '<span class="badge badge-top">top sign</span>' : ''}
         </div>` : ''}
+        ${!s.seed && s.fp ? `<div class="sign-fp">fp:${s.fp} · ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : 'unknown time'}</div>` : ''}
       </div>
-      <button class="del-btn" onclick="deleteSign('${s.id}')" aria-label="Delete sign">&#128465; Delete</button>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button class="del-btn" onclick="deleteSign('${s.id}')" aria-label="Delete sign">🗑 Delete</button>
+        ${!s.seed && s.fp ? `<button class="del-fp-btn" onclick="deleteByFingerprint('${s.fp}')" aria-label="Delete all from this device">💀 All (${signs.filter(x=>x.fp==='${s.fp}').length})</button>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
