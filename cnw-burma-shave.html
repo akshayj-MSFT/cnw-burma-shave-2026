@@ -539,6 +539,8 @@ async function deleteByFingerprint(fp) {
   if (ok) flash(`Deleted ${count} signs from ${fp}`, 'var(--yellow)');
   else { flash('Delete failed', 'var(--pink)'); load(); }
 }
+
+async function submitSign() {
   if (isPastDeadline()) { flash('Submissions are closed — voting is still open!', 'var(--muted)'); return; }
   const inp = document.getElementById('newSign');
   const text = inp.value.trim(); if (!text) return;
@@ -611,8 +613,6 @@ function render() {
         <button class="del-btn" onclick="deleteSign('${s.id}')" aria-label="Delete sign">🗑 Delete</button>
         ${fpBtn}
       </div>
-    </div>`;
-  }).join('');
     </div>`;
   }).join('');
 }
