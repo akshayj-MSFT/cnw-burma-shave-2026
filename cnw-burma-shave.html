@@ -590,6 +590,9 @@ function render() {
     const showTop = i === 0 && s.votes > 0;
     const markColor = rankColors[ri] || 'transparent';
     const safeTxt = s.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const fpCount = s.fp ? signs.filter(x => x.fp === s.fp).length : 0;
+    const fpLine = (!s.seed && s.fp) ? `<div class="sign-fp">fp:${s.fp} · ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : 'unknown time'}</div>` : '';
+    const fpBtn = (!s.seed && s.fp) ? `<button class="del-fp-btn" onclick="deleteByFingerprint('${s.fp}')" aria-label="Delete all from this device">💀 All (${fpCount})</button>` : '';
     return `<div class="sign-card ${rankClasses[ri]}">
       <span class="rank-mark" style="color:${markColor}" aria-hidden="true">${rankMarks[ri] || ''}</span>
       <div class="vote-col">
@@ -602,12 +605,14 @@ function render() {
           ${!s.seed ? '<span class="badge badge-new">community</span>' : ''}
           ${showTop ? '<span class="badge badge-top">top sign</span>' : ''}
         </div>` : ''}
-        ${!s.seed && s.fp ? `<div class="sign-fp">fp:${s.fp} · ${s.submitted_at ? new Date(s.submitted_at).toLocaleString() : 'unknown time'}</div>` : ''}
+        ${fpLine}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
         <button class="del-btn" onclick="deleteSign('${s.id}')" aria-label="Delete sign">🗑 Delete</button>
-        ${!s.seed && s.fp ? `<button class="del-fp-btn" onclick="deleteByFingerprint('${s.fp}')" aria-label="Delete all from this device">💀 All (${signs.filter(x=>x.fp==='${s.fp}').length})</button>` : ''}
+        ${fpBtn}
       </div>
+    </div>`;
+  }).join('');
     </div>`;
   }).join('');
 }
